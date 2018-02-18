@@ -37,6 +37,8 @@
 #include "RemComSvc.h"
 #include "RemCom.h"
 
+DWORD MAX_WAIT_TIME_FOR_STOP_EVENT = 5 * 60 * 1000; // 5 minutes
+
 void	CommunicationPoolThread(PVOID);
 void	CommunicationPipeThreadProc(PVOID);
 DWORD	Execute(RemComMessage*, DWORD*);
@@ -53,8 +55,14 @@ void _ServiceMain( void* )
    _beginthread( CommunicationPoolThread, 0, NULL );
 
    // Waiting for stop the service
+   DWORD startTime = GetTickCount();
    while( WaitForSingleObject( hStopServiceEvent, 10 ) != WAIT_OBJECT_0 )
    {
+	   DWORD timeWaited = GetTickCount() - startTime;
+	   if (timeWaited > MAX_WAIT_TIME_FOR_STOP_EVENT)
+	   {
+		   break;
+	   }
    }
    
    // Let's delete itself, after the service stopped
